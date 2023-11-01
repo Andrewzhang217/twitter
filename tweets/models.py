@@ -8,6 +8,11 @@ class Tweet(models.Model):
     content = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        index_together = (('user', 'created_at'),)
+        ordering = ('user', '-created_at')
+        # ordering does not modify the database, specifies the order of django queryset
+
     @property
     def hours_to_now(self):
         return (time_helpers.utc_now() - self.created_at).seconds // 3600
