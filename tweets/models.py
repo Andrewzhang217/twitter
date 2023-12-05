@@ -4,7 +4,12 @@ from utils import time_helpers
 
 
 class Tweet(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        help_text="who posts this tweet",
+    )
     content = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
