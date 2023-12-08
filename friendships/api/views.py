@@ -65,5 +65,4 @@ class FriendshipViewSet(viewsets.GenericViewSet):
             from_user=request.user,
             to_user=unfollow_user,
         ).delete()
-        return Response({'success': True, 'deleted': deleted}, status=status.HTTP_204_NO_CONTENT)
-
+        return Response({'success': True, 'deleted': deleted})
