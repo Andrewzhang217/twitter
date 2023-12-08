@@ -26,6 +26,7 @@ class Friendship(models.Model):
         )
         # prevent duplicate follow
         unique_together = (('from_user_id', 'to_user_id'),)
+        ordering = ('-created_at',)
 
     def __str__(self):
         return '{} followed {}'.format(self.from_user_id, self.to_user_id)
