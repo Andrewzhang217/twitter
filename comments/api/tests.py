@@ -103,3 +103,35 @@ class CommentApiTests(TestCase):
         self.assertEqual(comment.created_at, before_created_at)
         self.assertNotEqual(comment.created_at, now)
         self.assertNotEqual(comment.updated_at, before_updated_at)
+
+    def test_list(self):
+        # must contain tweet_id in params
+        response = self.anonymous_client.get(COMMENT_URL)
+        self.assertEqual(response.status_code, 400)
+
+        # access with tweet_id is OK
+        # initially no comments
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': self.tweet.id,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['comments']), 0)
+
+        # comment should be ordered by created time
+        self.create_comment(self.user1, self.tweet, '1')
+        self.create_comment(self.user2, self.tweet, '2')
+        self.create_comment(self.user2, self.create_tweet(self.user2), '3')
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': self.tweet.id,
+        })
+        self.assertEqual(len(response.data['comments']), 2)
+        self.assertEqual(response.data['comments'][0]['content'], '1')
+        self.assertEqual(response.data['comments'][1]['content'], '2')
+
+        # both user_id and tweet_id in params
+        # only tweet_id take effect in filter
+        response = self.anonymous_client.get(COMMENT_URL, {
+            'tweet_id': self.tweet.id,
+            'user_id': self.user1.id,
+        })
+        self.assertEqual(len(response.data['comments']), 2)
