@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase as DjangoTestcase
 from likes.models import Like
+from newsfeeds.models import NewsFeed
 from rest_framework.test import APIClient
 from tweets.models import Tweet
 
@@ -51,3 +52,6 @@ class TestCase(DjangoTestcase):
         client = APIClient()
         client.force_authenticate(user)
         return user, client
+
+    def create_newsfeed(self, user, tweet):
+        return NewsFeed.objects.create(user=user, tweet=tweet)
