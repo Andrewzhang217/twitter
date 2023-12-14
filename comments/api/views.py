@@ -5,7 +5,7 @@ from comments.api.serializers import (
     CommentSerializerForCreate,
     CommentSerializerForUpdate,
 )
-
+from inbox.services import NotificationService
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -63,6 +63,7 @@ class CommentViewSet(viewsets.GenericViewSet):
 
         # save will call the create() method of serializer to instantiate
         comment = serializer.save()
+        NotificationService.send_comment_notification(comment)
         return Response(
             CommentSerializer(comment, context={'request': request}).data,
             status=status.HTTP_201_CREATED,
