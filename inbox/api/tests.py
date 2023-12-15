@@ -124,3 +124,51 @@ class NotificationApiTests(TestCase):
         self.assertEqual(response.data['count'], 1)
         response = self.user1_client.get(NOTIFICATION_URL, {'unread': False})
         self.assertEqual(response.data['count'], 1)
+
+    def test_update(self):
+        self.user2_client.post(LIKE_URL, {
+            'content_type': 'tweet',
+            'object_id': self.user1_tweet.id,
+        })
+        comment = self.create_comment(self.user1, self.user1_tweet)
+        self.user2_client.post(LIKE_URL, {
+            'content_type': 'comment',
+            'object_id': comment.id,
+        })
+        notification = self.user1.notifications.first()
+
+        url = '/api/notifications/{}/'.format(notification.id)
+        # POST not allowed, need PUT
+        response = self.user2_client.post(url, {'unread': False})
+        self.assertEqual(response.status_code, 405)
+        # other users not allowed to change notification status
+        response = self.anonymous_client.put(url, {'unread': False})
+        self.assertEqual(response.status_code, 403)
+        # queryset based on logged in user，thus 404 but not 403, empty query_set
+        response = self.user2_client.put(url, {'unread': False})
+        self.assertEqual(response.status_code, 404)
+
+        unread_url = '/api/notifications/unread-count/'
+        response = self.user1_client.get(unread_url)
+        self.assertEqual(response.data['unread_count'], 2)
+
+        # mark as read OK
+        response = self.user1_client.put(url, {'unread': False})
+        self.assertEqual(response.status_code, 200)
+        response = self.user1_client.get(unread_url)
+        self.assertEqual(response.data['unread_count'], 1)
+
+        # mark as unread then
+        response = self.user1_client.put(url, {'unread': True})
+        response = self.user1_client.get(unread_url)
+        self.assertEqual(response.data['unread_count'], 2)
+        # must contain param 'unread'
+        response = self.user1_client.put(url, {'verb': 'newverb'})
+        self.assertEqual(response.status_code, 400)
+        # not allowed to modify other fields
+        response = self.user1_client.put(url, {'verb': 'newverb', 'unread': False})
+        self.assertEqual(response.status_code, 200)
+        # need refresh from db is because the PUT request changed the record in db, but not the notification var
+        # which is alr loaded into RAM
+        notification.refresh_from_db()
+        self.assertNotEqual(notification.verb, 'newverb')
