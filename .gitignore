@@ -2,6 +2,7 @@
 .vagrant
 Vagrantfile
 notes.md
+media/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
