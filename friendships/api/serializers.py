@@ -25,7 +25,7 @@ class FollowingUserIdSetMixin:
 class FollowerSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
     # can access a field or method of a model instance through source=xxx
     # i.e. model_instance.xxx
-    user = UserSerializerForFriendships(source='from_user')
+    user = UserSerializerForFriendships(source='cached_from_user')
     has_followed = serializers.SerializerMethodField()
 
     class Meta:
@@ -44,7 +44,7 @@ class FollowerSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
 
 
 class FollowingSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
-    user = UserSerializerForFriendships(source='to_user')
+    user = UserSerializerForFriendships(source='cached_to_user')
     has_followed = serializers.SerializerMethodField()
 
     class Meta:
