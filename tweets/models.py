@@ -1,3 +1,4 @@
+from accounts.services import UserService
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -21,6 +22,10 @@ class Tweet(models.Model):
         ordering = ('user', '-created_at')
         # ordering does not modify the database, specifies the order of django queryset
 
+    def __str__(self):
+        # this would be shown when print the instance
+        return f'{self.created_at} {self.user}: {self.content}'
+
     @property
     def hours_to_now(self):
         return (time_helpers.utc_now() - self.created_at).seconds // 3600
@@ -32,9 +37,9 @@ class Tweet(models.Model):
             object_id=self.id,
         ).order_by('-created_at')
 
-    def __str__(self):
-        # this would be shown when print the instance
-        return f'{self.created_at} {self.user}: {self.content}'
+    @property
+    def cached_user(self):
+        return UserService.get_user_through_cache(self.user_id)
 
 
 class TweetPhoto(models.Model):
