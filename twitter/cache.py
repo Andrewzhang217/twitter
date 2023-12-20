@@ -4,5 +4,4 @@ FOLLOWINGS_PATTERN = 'followings:{user_id}'
 # also often get stale due to frequent follow/unfollow
 
 
-USER_PATTERN = 'user:{user_id}'
 USER_PROFILE_PATTERN = 'userprofile:{user_id}'
