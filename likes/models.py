@@ -37,4 +37,4 @@ class Like(models.Model):
 
     @property
     def cached_user(self):
-        return MemcachedHelper.get_object_through_cache(self.user_id)
+        return MemcachedHelper.get_object_through_cache(User, self.user_id)

@@ -135,3 +135,6 @@ dmypy.json
 .pyre/
 /.pycharm_helpers/
 .idea
+
+# redis snapshots
+*.rdb
