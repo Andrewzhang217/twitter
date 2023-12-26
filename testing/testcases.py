@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import caches
 from django.test import TestCase as DjangoTestcase
+from friendships.models import Friendship
 from likes.models import Like
 from newsfeeds.models import NewsFeed
 from rest_framework.test import APIClient
@@ -61,3 +62,6 @@ class TestCase(DjangoTestcase):
 
     def create_newsfeed(self, user, tweet):
         return NewsFeed.objects.create(user=user, tweet=tweet)
+
+    def create_friendship(self, from_user, to_user):
+        return Friendship.objects.create(from_user=from_user, to_user=to_user)
