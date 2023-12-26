@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from likes.models import Like
 from tweets.constants import TweetPhotoStatus, TWEET_PHOTO_STATUS_CHOICES
+from tweets.listeners import push_tweet_to_cache
 from utils import time_helpers
 from utils.listeners import invalidate_object_cache
 from utils.memcached_helper import MemcachedHelper
@@ -87,3 +88,9 @@ class TweetPhoto(models.Model):
 
 pre_delete.connect(invalidate_object_cache, sender=Tweet)
 post_save.connect(invalidate_object_cache, sender=Tweet)
+post_save.connect(push_tweet_to_cache, sender=Tweet)
+
+# Now does not support modify tweets, if user_id 1 has [{1, 'hello}, {2, world] tweets in redis
+# modification of tweets does not update cache in redis
+# a possible solution is to only store tweets ids in redis, then get tweets contents from memcached
+# cache.get_many([...])
