@@ -1,9 +1,10 @@
+from newsfeeds.services import NewsFeedService
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from tweets.api.serializers import TweetSerializer, TweetSerializerForCreate, TweetSerializerForDetail
 from tweets.models import Tweet
-from newsfeeds.services import NewsFeedService
+from tweets.services import TweetService
 from utils.decorators import required_params
 from utils.paginations import EndlessPagination
 
@@ -34,7 +35,9 @@ class TweetViewSet(viewsets.GenericViewSet):
         # order by created_at desc
         # this SQL query uses composite index (user, created_at)
         user_id = request.query_params['user_id']
-        tweets = Tweet.objects.filter(user_id=user_id).order_by('-created_at')
+        # tweets = Tweet.objects.filter(user_id=user_id).order_by('-created_at')
+        # now can try to get cached tweets in redis
+        tweets = TweetService.get_cached_tweets(user_id)
         tweets = self.paginate_queryset(tweets)
         serializer = TweetSerializer(
             tweets,
