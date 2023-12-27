@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 from tweets.constants import TWEET_PHOTOS_UPLOAD_LIMIT
 from tweets.models import Tweet
 from tweets.services import TweetService
+from utils.redis_helper import RedisHelper
 
 
 class TweetSerializer(serializers.ModelSerializer):
@@ -33,11 +34,12 @@ class TweetSerializer(serializers.ModelSerializer):
     # a Tweet object using this serializer. Each method corresponds to a specific field in the serializer and
     # is responsible for providing the data for that field during the serialization process.
     def get_likes_count(self, obj):
-        return obj.like_set.count()
+        # before SELECT COUNT(*)... N + 1 db queries for a newsfeed with N tweets
+        # after redis get
+        return RedisHelper.get_count(obj, 'likes_count')
 
     def get_comments_count(self, obj):
-        # django has this reverse query
-        return obj.comment_set.count()
+        return RedisHelper.get_count(obj, 'comments_count')
 
     def get_has_liked(self, obj):
         return LikeService.has_liked(self.context['request'].user, obj)
