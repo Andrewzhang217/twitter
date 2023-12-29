@@ -188,6 +188,13 @@ REDIS_DB = 0 if TESTING else 1
 REDIS_KEY_EXPIRE_TIME = 7 * 86400  # in seconds
 REDIS_LIST_LENGTH_LIMIT = 1000 if not TESTING else 20
 
+# Celery Configuration Options
+# run worker process as below (process handling async tasks, usually on a separate machine)
+#   celery -A twitter worker -l INFO
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2' if not TESTING else 'redis://127.0.0.1:6379/0'
+CELERY_TIMEZONE = "UTC"
+CELERY_TASK_ALWAYS_EAGER = TESTING  # Testing only run synchronously
+
 try:
     from .local_settings import *
 except:
