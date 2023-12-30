@@ -4,8 +4,6 @@ echo 'Start!'
 
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.6 2
 
-cd /vagrant
-
 sudo apt-get update
 sudo apt-get install tree
 
@@ -26,13 +24,8 @@ else
   echo "pip3 已安装"
 fi
 
-# 升级pip，目前存在问题，read timed out，看脸，有时候可以，但大多时候不行
-# python -m pip install --upgrade pip
-# 换源完美解决
-# 安装pip所需依赖
 pip install --upgrade setuptools
 pip install --ignore-installed wrapt
-# 安装pip最新版
 pip install -U pip
 # 根据 requirements.txt 里的记录安装 pip package，确保所有版本之间的兼容性
 pip install -r requirement.txt
@@ -47,13 +40,5 @@ sudo mysql -u root << EOF
 	CREATE DATABASE IF NOT EXISTS twitter;
 EOF
 # fi
-
-
-# 如果想直接进入/vagrant路径下
-# 请输入vagrant ssh命令进入
-# 手动输入
-# 输入ls -a
-# 输入 vi .bashrc
-# 在最下面，添加cd /vagrant
 
 echo 'All Done!'
