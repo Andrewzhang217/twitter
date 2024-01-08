@@ -4,6 +4,7 @@ Vagrantfile
 notes.md
 media/
 hbase-2.5.7
+thrift-0.14.1
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

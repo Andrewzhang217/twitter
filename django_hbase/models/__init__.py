@@ -1,2 +1,2 @@
 from .fields import *
-from .hbase_model import *
+from .hbase_models import *
