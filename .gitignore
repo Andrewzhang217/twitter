@@ -3,6 +3,7 @@
 Vagrantfile
 notes.md
 media/
+hbase-2.5.7
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
