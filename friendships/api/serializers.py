@@ -1,7 +1,6 @@
 from accounts.api.serializers import UserSerializerForFriendships
 from accounts.services import UserService
 from django.contrib.auth.models import User
-from friendships.models import Friendship
 from friendships.services import FriendshipService
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -18,7 +17,6 @@ class BaseFriendshipSerializer(serializers.Serializer):
     def create(self, validated_data):
         pass
 
-    @property
     def following_user_id_set(self):
         if self.context['request'].user.is_anonymous:
             return {}
@@ -56,13 +54,9 @@ class FollowingSerializer(BaseFriendshipSerializer):
         return obj.to_user_id
 
 
-class FriendshipSerializerForCreate(serializers.ModelSerializer):
+class FriendshipSerializerForCreate(serializers.Serializer):
     from_user_id = serializers.IntegerField()
     to_user_id = serializers.IntegerField()
-
-    class Meta:
-        model = Friendship
-        fields = ('from_user_id', 'to_user_id')
 
     def validate(self, attrs):
         if attrs['from_user_id'] == attrs['to_user_id']:
@@ -81,3 +75,6 @@ class FriendshipSerializerForCreate(serializers.ModelSerializer):
             from_user_id=validated_data['from_user_id'],
             to_user_id=validated_data['to_user_id']
         )
+
+    def update(self, instance, validated_data):
+        pass

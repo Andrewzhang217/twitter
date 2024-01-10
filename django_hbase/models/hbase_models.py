@@ -157,6 +157,12 @@ class HBaseModel:
         return instance
 
     @classmethod
+    def delete(cls, **kwargs):
+        row_key = cls.serialize_row_key(kwargs)
+        table = cls.get_table()
+        return table.delete(row_key)
+
+    @classmethod
     def get_table_name(cls):
         if not cls.Meta.table_name:
             raise NotImplementedError('Missing table_name in HBaseModel meta class')

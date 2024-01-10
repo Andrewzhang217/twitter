@@ -1,5 +1,6 @@
 from friendships.api.paginations import FriendshipPagination
 from friendships.models import Friendship
+from friendships.services import FriendshipService
 from rest_framework.test import APIClient
 from testing.testcases import TestCase
 
@@ -12,7 +13,7 @@ FOLLOWINGS_URL = '/api/friendships/{}/followings/'
 class FriendshipApiTests(TestCase):
 
     def setUp(self):
-        self.clear_cache()
+        super(FriendshipApiTests, self).setUp()
         self.t_user1 = self.create_user('t_user1')
         self.t_user1_client = APIClient()
         self.t_user1_client.force_authenticate(self.t_user1)
@@ -24,10 +25,10 @@ class FriendshipApiTests(TestCase):
         # create followings and followers for t_user2
         for i in range(2):
             follower = self.create_user('t_user2_follower{}'.format(i))
-            Friendship.objects.create(from_user=follower, to_user=self.t_user2)
+            self.create_friendship(from_user=follower, to_user=self.t_user2)
         for i in range(3):
             following = self.create_user('t_user2_following{}'.format(i))
-            Friendship.objects.create(from_user=self.t_user2, to_user=following)
+            self.create_friendship(from_user=self.t_user2, to_user=following)
 
     def test_follow(self):
         url = FOLLOW_URL.format(self.t_user1.id)
@@ -46,11 +47,13 @@ class FriendshipApiTests(TestCase):
         # duplicate follow 400
         response = self.t_user2_client.post(url)
         self.assertEqual(response.status_code, 400)
+
         # reverse follow will create new data
-        count = Friendship.objects.count()
+        before_count = FriendshipService.get_following_count(self.t_user1.id)
         response = self.t_user1_client.post(FOLLOW_URL.format(self.t_user2.id))
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(Friendship.objects.count(), count + 1)
+        after_count = FriendshipService.get_following_count(self.t_user1.id)
+        self.assertEqual(after_count, before_count + 1)
 
     def test_unfollow(self):
         url = UNFOLLOW_URL.format(self.t_user1.id)
@@ -65,18 +68,21 @@ class FriendshipApiTests(TestCase):
         response = self.t_user1_client.post(url)
         self.assertEqual(response.status_code, 400)
         # unfollow OK
-        Friendship.objects.create(from_user=self.t_user2, to_user=self.t_user1)
-        count = Friendship.objects.count()
+        self.create_friendship(from_user=self.t_user2, to_user=self.t_user1)
+        before_count = FriendshipService.get_following_count(self.t_user2.id)
         response = self.t_user2_client.post(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['deleted'], 1)
-        self.assertEqual(Friendship.objects.count(), count - 1)
+        after_count = FriendshipService.get_following_count(self.t_user2.id)
+        self.assertEqual(after_count, before_count - 1)
+
         # if not followed, silent unfollow request
-        count = Friendship.objects.count()
+        before_count = FriendshipService.get_following_count(self.t_user2.id)
         response = self.t_user2_client.post(url)
+        after_count = FriendshipService.get_following_count(self.t_user2.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['deleted'], 0)
-        self.assertEqual(Friendship.objects.count(), count)
+        self.assertEqual(after_count, before_count)
 
     def test_followings(self):
         url = FOLLOWINGS_URL.format(self.t_user2.id)
@@ -134,9 +140,9 @@ class FriendshipApiTests(TestCase):
         page_size = FriendshipPagination.page_size
         for i in range(page_size * 2):
             follower = self.create_user('t_user1_follower{}'.format(i))
-            Friendship.objects.create(from_user=follower, to_user=self.t_user1)
+            self.create_friendship(from_user=follower, to_user=self.t_user1)
             if follower.id % 2 == 0:
-                Friendship.objects.create(from_user=self.t_user2, to_user=follower)
+                self.create_friendship(from_user=self.t_user2, to_user=follower)
 
         url = FOLLOWERS_URL.format(self.t_user1.id)
         self._test_friendship_pagination(url, page_size, max_page_size)
@@ -157,9 +163,9 @@ class FriendshipApiTests(TestCase):
         page_size = FriendshipPagination.page_size
         for i in range(page_size * 2):
             following = self.create_user('t_user1_following{}'.format(i))
-            Friendship.objects.create(from_user=self.t_user1, to_user=following)
+            self.create_friendship(from_user=self.t_user1, to_user=following)
             if following.id % 2 == 0:
-                Friendship.objects.create(from_user=self.t_user2, to_user=following)
+                self.create_friendship(from_user=self.t_user2, to_user=following)
 
         url = FOLLOWINGS_URL.format(self.t_user1.id)
         self._test_friendship_pagination(url, page_size, max_page_size)
