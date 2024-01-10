@@ -48,22 +48,15 @@ class FriendshipService(object):
 
     @classmethod
     def get_following_user_id_set(cls, from_user_id):
-        key = FOLLOWINGS_PATTERN.format(user_id=from_user_id)
-        user_id_set = cache.get(key)
-
-        # cache hit
-        if user_id_set is not None:
-            return user_id_set
-
-        # cache miss
-        friendships = Friendship.objects.filter(from_user_id=from_user_id)
+        if not GateKeeper.is_switch_on('switch_friendship_to_hbase'):
+            friendships = Friendship.objects.filter(from_user_id=from_user_id)
+        else:
+            friendships = HBaseFollowing.filter(prefix=(from_user_id, None))
         user_id_set = set([
             fs.to_user_id
             for fs in friendships
         ])
 
-        # load into memcached
-        cache.set(key, user_id_set)
         return user_id_set
 
     # remember the cache coherence protocol implemented in CS4223?
