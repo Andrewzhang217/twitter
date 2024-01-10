@@ -5,6 +5,7 @@ from django.core.cache import caches
 from django.test import TestCase as DjangoTestcase
 from django_hbase.models import HBaseModel
 from friendships.models import Friendship
+from gatekeeper.models import GateKeeper
 from likes.models import Like
 from newsfeeds.models import NewsFeed
 from rest_framework.test import APIClient
@@ -34,6 +35,7 @@ class TestCase(DjangoTestcase):
     def clear_cache(self):
         RedisClient.clear()
         caches['testing'].clear()
+        # GateKeeper.set_kv('switch_friendship_to_hbase', 'percent', 100)
 
     @property
     def anonymous_client(self):

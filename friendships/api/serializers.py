@@ -1,4 +1,5 @@
 from accounts.api.serializers import UserSerializerForFriendships
+from accounts.services import UserService
 from django.contrib.auth.models import User
 from friendships.models import Friendship
 from friendships.services import FriendshipService
@@ -6,10 +7,19 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
-class FollowingUserIdSetMixin:
+class BaseFriendshipSerializer(serializers.Serializer):
+    user = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    has_followed = serializers.SerializerMethodField()
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
 
     @property
-    def following_user_id_set(self: serializers.ModelSerializer):
+    def following_user_id_set(self):
         if self.context['request'].user.is_anonymous:
             return {}
         # cached in the current process
@@ -21,46 +31,29 @@ class FollowingUserIdSetMixin:
         setattr(self, '_cached_following_user_id_set', user_id_set)
         return user_id_set
 
+    # must be implemented in subclasses
+    def get_user_id(self, obj):
+        raise NotImplementedError
 
-class FollowerSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
-    # can access a field or method of a model instance through source=xxx
-    # i.e. model_instance.xxx
-    user = UserSerializerForFriendships(source='cached_from_user')
-    has_followed = serializers.SerializerMethodField()
+    def get_user(self, obj):
+        user = UserService.get_user_by_id(self.get_user_id(obj))
+        return UserSerializerForFriendships(user).data
 
-    class Meta:
-        model = Friendship
-        fields = ('user', 'created_at', 'has_followed')
+    def get_created_at(self, obj):
+        return obj.created_at
 
-    # def get_has_followed(self, obj):
-    #     if self.context['request'].user.is_anonymous:
-    #         return False
-    #     # <TODO> for every object a SQL query，slow，need optimisation
-    #     return FriendshipService.has_followed(self.context['request'].user, obj.from_user)
-
-    # optimisation with memcached
     def get_has_followed(self, obj):
-        return obj.from_user_id in self.following_user_id_set
+        return self.get_user_id(obj) in self.following_user_id_set()
 
 
-class FollowingSerializer(serializers.ModelSerializer, FollowingUserIdSetMixin):
-    user = UserSerializerForFriendships(source='cached_to_user')
-    has_followed = serializers.SerializerMethodField()
+class FollowerSerializer(BaseFriendshipSerializer):
+    def get_user_id(self, obj):
+        return obj.from_user_id
 
-    class Meta:
-        model = Friendship
-        fields = ('user', 'created_at', 'has_followed')
 
-    # def get_has_followed(self, obj):
-    #     if self.context['request'].user.is_anonymous:
-    #         return False
-    #     # <TODO> for every object a SQL query，slow，need optimisation
-    #     return FriendshipService.has_followed(self.context['request'].user, obj.to_user)
-    #
-
-    # optimisation with memcached
-    def get_has_followed(self, obj):
-        return obj.to_user_id in self.following_user_id_set
+class FollowingSerializer(BaseFriendshipSerializer):
+    def get_user_id(self, obj):
+        return obj.to_user_id
 
 
 class FriendshipSerializerForCreate(serializers.ModelSerializer):
@@ -84,7 +77,7 @@ class FriendshipSerializerForCreate(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        return Friendship.objects.create(
+        return FriendshipService.follow(
             from_user_id=validated_data['from_user_id'],
             to_user_id=validated_data['to_user_id']
         )
